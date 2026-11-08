@@ -631,7 +631,7 @@ plt.show()
 # We can also check the effect on readmission rate of the number of medications given to each patient, as well as the dosage variations.
 
 # %%
-n_medications = (meds != "No").sum(axis=1).clip(upper=3).astype(str).replace("3", "3+")
+n_diabetes_medications = (meds != "No").sum(axis=1).clip(upper=3).astype(str).replace("3", "3+")
 n_dosage_changes = (
     meds.isin(["Up", "Down"]).sum(axis=1).clip(upper=2).astype(str).replace("2", "2+")
 )
@@ -641,7 +641,7 @@ fig, axes = plt.subplots(1, 2, figsize=(13, 3.6), sharey=True)
 rate_bars(
     axes[0],
     not_excluded_discharges,
-    n_medications,
+    n_diabetes_medications,
     title="Readmission rate by number of medications given",
 )
 rate_bars(
@@ -665,8 +665,8 @@ plt.show()
 #
 # - Drop `examide` and `citoglipton` column, since these are never prescribed (therefore are constant).
 # - Maintain a column for each of the high prescription rate medications (>1%).
-# - Create new `n_medications` and `n_dosage_changes` columns, since those affect readmission rates.
-# - Low prescription rate medication (<1%) will only be used in the `n_medications` and `n_dosage_changes` columns. No dedicated column.
+# - Create new `n_diabetes_medications` and `n_dosage_changes` columns, since those affect readmission rates.
+# - Low prescription rate medication (<1%) will only be used in the `n_diabetes_medications` and `n_dosage_changes` columns. No dedicated column.
 # - Make `change` and `diabetesMed` binary (Yes = 1, No = 0)
 
 # %% [markdown]

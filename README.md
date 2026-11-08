@@ -32,6 +32,7 @@ cp .env.example .env
 | Notebook | Command |
 |---|---|
 | 1. Data visualization notebook (plots saved to `reports/generated/figures`) | `jupytext --to ipynb notebooks/data_visualization.py` |
+| 2. Data preprocessing notebook | `jupytext --to ipynb notebooks/preprocessing.py` |
 
 To save the notebooks as a `.py` file before commiting, run the same commands, but reversed.
 
