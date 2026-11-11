@@ -102,7 +102,7 @@ print(f"Dataset shape: {df_raw.shape[0]:,} rows x {df_raw.shape[1]} columns")
 # 7. **Age band to ordinal**: [0-10], ..., [90-100] to 0..9
 # 8. **Binary**: `change` (Ch to 1, otherwise 0), `diabetesMed` (Yes to 1, otherwise 0)
 # 9. **Drop**: `weight`, `examide`, `citoglipton`
-# 10. **Feature engineering**: Add `n_prior_visits`, `n_med_changes`, `n_diabetes_meds`
+# 10. **Feature engineering**: Add `n_prior_visits`, `n_dosage_changes`, `n_diabetes_medications`
 #
 
 # %%
