@@ -14,6 +14,7 @@
 
 # %% [markdown]
 # ## Diabetes: Hospital Readmission
+#
 # ### Data visualization
 #
 # **Core Question:** At the moment of hospital discharge, estimate the risk that a diabetic patient will be readmitted as an inpatient in less
@@ -40,6 +41,7 @@
 # 12. High-cardinality features: Medical specialty and payer code
 # 13. Numeric features and outliers
 # 14. Correlation between numeric features
+#
 
 # %%
 # allows automatic reloading of the external modules that are imported in this notebook (created in the src/ folder)
@@ -48,6 +50,7 @@
 
 # %% [markdown]
 # ### 0. Setup
+#
 
 # %%
 import sys
@@ -196,16 +199,19 @@ print("Figures folder :", FIGURES)
 # The project guide clarifies that "missingness is field-specific" and that the missing values on the raw CSV are represented by `?`. However, the columns `max_glu_serum` and `A1Cresult` write a "None" string if the tests were not done. This string is interpreted by Pandas as missing.
 #
 # With that in mind, during preprocessing, we will interpret `?` as the **only** missing value marker. Other "unknown" representations will be treated on a case by case basis.
+#
 
 # %% [markdown]
 # ### 2. The target variable
 #
 # The business question is centered around patient readmission in the following 30 days. However, the outcome field (`readmitted`) contains three possible values:
+#
 # - `<30`
 # - `>30`
 # - `NO`
 #
 # In our business case, only `<30` results are interpreted as a binary 1. The other two are interpreted as 0 (not readmitted in the following 30 days).
+#
 
 # %%
 df = read_raw_data()
@@ -233,7 +239,9 @@ plt.show()
 
 # %% [markdown]
 # ### 3. Patients and encounters
+#
 # the `encounter_id` variable is unique, but `patient_nbr` repeats.
+#
 
 # %%
 print("Nº encounters: ", df.groupby("encounter_id").size().shape[0])
@@ -289,9 +297,11 @@ print(
 # This makes sense, since a readmission always creates a new encounter in the file. In other words, a patient seen only once is a patient who was not readmitted. However,"number of encounters of this patient" must **never** be a feature, because it introduces target leakage (if different encounters for the same patient would be found in both the training and test sets, the model would be partly scored on previously seen data).
 #
 # Knowing this, the data will be **grouped by patient**, instead of used as is, ensuring that all encounters for the same patient go into the same dataset (either train, validation or test).
+#
 
 # %% [markdown]
 # ### 4. Missing values
+#
 
 # %%
 missing = (df.isna().mean() * 100).sort_values()
@@ -318,6 +328,7 @@ plt.show()
 # `weight` is almost empty and can be dropped. `medical_specialty` and `payer_code` sit around the 40%
 # mark, but they are **categorical** values: we can keep "not recorded" as a category of its
 # own instead of assigning a value.
+#
 
 # %%
 fig, axes = plt.subplots(1, 3, figsize=(15, 3.5), sharey=True)
@@ -347,11 +358,13 @@ plt.show()
 # In conclusion, in the data preparation step, we will be drop the `weight` column, as it is almost 100% missing. Then, we will keep the other 3 categorical variables with missing data (`payer_code`, `medical_specialty` and `race`) and assign the missing values to a new `Unknown` category (due to the difference in readmission rate in the `race` column when comparing missing and recorded values).
 #
 # Finally, the missing values in the `diag_` columns will represent a new `Missing` group.
+#
 
 # %% [markdown]
 # ### 5. Where did the patients go after the stay
 #
 # Some destinations make readmission impossible. For example, discharges to hospice care or eventual death (13, 14, 19, 20, 21) are terminal care cases. This means that the patients normally won't be readmitted but, exceptionally, these cases are not supposed to be identified as low-risk.
+#
 
 # %%
 discharge = df.assign(
@@ -404,6 +417,7 @@ print(f"Expired or hospice care: {excluded_groups.sum():,} encounters")
 
 # %% [markdown]
 # To avoid "tricking" the model, we decided to remove the 2423 encounters that ended in hospice care or death (groups with ID in `config.EXCLUDE_DISCHARGE_IDS`).
+#
 
 # %%
 df["discharge_disposition_id"].value_counts()
@@ -424,6 +438,7 @@ df["discharge_disposition_id"].value_counts()
 # ```
 #
 # Again, for code reusability, this grouping is a constant in `src/config`.
+#
 
 # %%
 not_excluded_discharges = df[~excluded_groups]
@@ -483,6 +498,7 @@ plt.show()
 #     "Newborn": [11, 12, 13, 14, 23, 24]
 # }
 # ```
+#
 
 # %%
 print(df["admission_type_id"].value_counts())
@@ -492,6 +508,7 @@ print(df["admission_source_id"].value_counts())
 # ### 7. Demographics
 #
 # Age is given in 10-year bands, from [0-10] into [90-100].These bands will be coded into ordinal code, 0-9. Regarding gender, we will map the `Unknown/Invalid` values into `Unknown`, for coherence with the rest of the columns.
+#
 
 # %%
 fig, axes = plt.subplots(1, 2, figsize=(17, 4), gridspec_kw={"width_ratios": [3, 2]})
@@ -522,6 +539,7 @@ plt.show()
 # In the dataset, there are three diagnose related columns (`diag_1`, `diag_2` and `diag_3`), 1 for primary diagnosis and 2/3 for secondary diagnosis.
 #
 # Each of these are encoded according to ICD_9 codes, which range from 1 to 999.
+#
 
 # %%
 print(
@@ -540,6 +558,7 @@ print(
 #
 # - **Codes V/E (E001, V01, ...)**: supplemental classification (V) or external causes (E) of injury diagnosis. Will become their own group.
 # - **Missing values**: Aggregate into a "Missing" group.
+#
 
 # %%
 fig, axes = plt.subplots(figsize=(11, 6.5))
@@ -561,6 +580,7 @@ plt.show()
 # ### 9. Lab tests
 #
 # Possible values for the lab test columns (`max_glu_serum` and `A1Cresult`) are substance intervals, `Norm` for normal values and `None` for not measured. We will transform `None` values into `Not measured`, one hot encoding the resulting columns.
+#
 
 # %%
 print(df["A1Cresult"].value_counts())
@@ -577,6 +597,7 @@ print(df["max_glu_serum"].value_counts())
 # - **Down**: Decreased the medication dosage.
 #
 # The medication column list is in `src.config.MEDICATIONS`.
+#
 
 # %%
 meds = not_excluded_discharges[config.MEDICATIONS]
@@ -629,9 +650,12 @@ plt.show()
 # Thirteen other medications are given in fewer than 1% of encounters. While too rare to learn from one by one, they can still be used as added information about the treatment. All other medications will have their own column.
 #
 # We can also check the effect on readmission rate of the number of medications given to each patient, as well as the dosage variations.
+#
 
 # %%
-n_medications = (meds != "No").sum(axis=1).clip(upper=3).astype(str).replace("3", "3+")
+n_diabetes_medications = (
+    (meds != "No").sum(axis=1).clip(upper=3).astype(str).replace("3", "3+")
+)
 n_dosage_changes = (
     meds.isin(["Up", "Down"]).sum(axis=1).clip(upper=2).astype(str).replace("2", "2+")
 )
@@ -641,8 +665,8 @@ fig, axes = plt.subplots(1, 2, figsize=(13, 3.6), sharey=True)
 rate_bars(
     axes[0],
     not_excluded_discharges,
-    n_medications,
-    title="Readmission rate by number of medications given",
+    n_diabetes_medications,
+    title="Readmission rate by number of diabetes medications given",
 )
 rate_bars(
     axes[1],
@@ -665,9 +689,10 @@ plt.show()
 #
 # - Drop `examide` and `citoglipton` column, since these are never prescribed (therefore are constant).
 # - Maintain a column for each of the high prescription rate medications (>1%).
-# - Create new `n_medications` and `n_dosage_changes` columns, since those affect readmission rates.
-# - Low prescription rate medication (<1%) will only be used in the `n_medications` and `n_dosage_changes` columns. No dedicated column.
+# - Create new `n_diabetes_medications` and `n_dosage_changes` columns, since those affect readmission rates.
+# - Low prescription rate medication (<1%) will only be used in the `n_diabetes_medications` and `n_dosage_changes` columns. No dedicated column.
 # - Make `change` and `diabetesMed` binary (Yes = 1, No = 0)
+#
 
 # %% [markdown]
 # ### 11. Prior visits
@@ -677,6 +702,7 @@ plt.show()
 # - **number_outpatient**: visits as an outpatient (ambulatory)
 # - **number_inpatient**: visits as an inpatient (staying in the hospital overnight)
 # - **number_emergency**: emergency visits
+#
 
 # %%
 visits = ["number_outpatient", "number_inpatient", "number_emergency"]
@@ -701,6 +727,7 @@ plt.show()
 # While the majority of encounters are from patients that had no prior visits in the last year (67-89%), it is clear that the readmission rate is heavily linked with the growing number of visits for **inpatients** and **emergency visits**.
 #
 # Knowing this, we will keep the columns as they are (to ensure that the information on the type of visit is not lost), and add a fourth column, `n_prior_visits`. This column is simply the sum of all values in the 3 original columns.
+#
 
 # %%
 prior = not_excluded_discharges[visits].sum(axis=1).rename("n_prior_visits")
@@ -717,6 +744,7 @@ plt.show()
 
 # %% [markdown]
 # ### 12. High-cardinality features: Medical specialty and payer code
+#
 
 # %%
 medical_specialty_counts = (
@@ -733,7 +761,8 @@ print(
 print("Number of different payer_code values: ", payer_code_counts.shape[0])
 
 # %% [markdown]
-# The `medical_specialty` feature can hold information regarding the patient encounter (the are of the health problem, especially when the ICD_9 diagnosis is missing), but it presents **73** possible values, way too many to one-hot encode. The same could be said for `payer_code`. Inspecting the `value_counts`, we can conclude that there are several values with a very low representation (<1%).
+# The `medical_specialty` feature can hold information regarding the patient encounter (the area of the health problem, especially when the ICD_9 diagnosis is missing), but it presents **73** possible values, way too many to one-hot encode. The same could be said for `payer_code`. Inspecting the `value_counts`, we can conclude that there are several values with a very low representation (<1%).
+#
 
 # %%
 fig, axes = plt.subplots(figsize=(16, 4))
@@ -779,11 +808,13 @@ print(
 
 # %% [markdown]
 # Knowing this, we will merge all categories with **less than 1%** representation into an `Infrequent` category. This category will also include unseen values in training, so that the model does not break.
+#
 
 # %% [markdown]
 # ### 13. Numeric features and outliers
 #
 # In total, there are 8 numeric features in the **raw** dataset, given by the following `NUMERIC_FEATURES` array.
+#
 
 # %%
 NUMERIC_FEATURES = [
@@ -824,11 +855,13 @@ not_excluded_discharges[NUMERIC_FEATURES].describe(percentiles=[0.01, 0.5, 0.99]
 # - **Standartization**: Standardize, using a `StandardScaler`.
 #
 # This will only be done on the training rows, to avoid data leakage.
+#
 
 # %% [markdown]
 # ### 14. Correlation between numeric features
 #
 # Through Spearman correlation, we are able to check if there are numeric features that correlate and can be dropped.
+#
 
 # %%
 corr = not_excluded_discharges[NUMERIC_FEATURES].corr(method="spearman")
@@ -852,3 +885,4 @@ plt.show()
 # As seen above, no feature is very correlated to others. The most correlated pair is `num_medications/time_in_hospital`, which makes sense: more days in the hospital usually means more administrated medication.
 #
 # Nevertheless, a max rho of 0.46 is not enough to drop features. No numeric features will be dropped during data preprocessing.
+#

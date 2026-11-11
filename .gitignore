@@ -1,6 +1,5 @@
 .venv/
 __pycache__/
-.env
 .ipynb_checkpoints
 
 # Env files
@@ -12,6 +11,10 @@ notebooks/*.ipynb
 # Data
 data/raw/*
 !data/raw/.gitkeep
+data/clean/*
+!data/clean/.gitkeep
+data/processed/*
+!data/processed/.gitkeep
 
 # Code generated reports
 reports/generated/*
