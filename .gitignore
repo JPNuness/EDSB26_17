@@ -1,2 +1,18 @@
 .venv/
 __pycache__/
+.env
+.ipynb_checkpoints
+
+# Env files
+.env
+
+# Notebooks (committed as .py)
+notebooks/*.ipynb
+
+# Data
+data/raw/*
+!data/raw/.gitkeep
+
+# Code generated reports
+reports/generated/*
+!reports/generated/.gitkeep
