@@ -12,6 +12,7 @@ from src.config import (
     ICD_9_CHAPTERS,
     TARGET,
     SEED,
+    SAMPLE_SIZE,
 )
 from src.config import (
     EXCLUDE_DISCHARGE_IDS,
@@ -161,6 +162,33 @@ def assign_split(data, seed=SEED):
 
     # all other folds (60% of data) are training folds
     return pd.Series(split, index=data.index, name="split")
+
+
+def sample_encounters(data: pd.DataFrame, n=SAMPLE_SIZE, seed=SEED):
+    if n < 1:
+        raise ValueError("n must be at least 1")
+    if n > len(data):
+        raise ValueError(f"n={n} exceeds the available {len(data)} encounters")
+    if TARGET not in data.columns:
+        raise KeyError(f"Target column '{TARGET}' is missing")
+
+    positive_count = round(n * data[TARGET].mean())
+    positive_count = min(max(positive_count, 0), n)
+
+    positive = data[data[TARGET] == 1]
+    negative = data[data[TARGET] == 0]
+
+    if positive_count > len(positive) or n - positive_count > len(negative):
+        raise ValueError("Not enough encounters to preserve the target distribution")
+
+    positives_sample = positive.sample(n=positive_count, random_state=seed)
+    negatives_sample = negative.sample(n=n - positive_count, random_state=seed + 1)
+
+    return (
+        pd.concat([positives_sample, negatives_sample])
+        .sample(frac=1, random_state=seed + 2)
+        .reset_index(drop=True)
+    )
 
 
 def _invert_groups_codes(groups: dict):

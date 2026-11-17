@@ -27,6 +27,28 @@ python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
+On Windows, run the following in PowerShell from the project root instead:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+```
+
+### Configure the raw data filenames
+
+Before running a notebook, open `.env` and make sure both values match the exact CSV filenames in `data/raw`. The copied `.env.example` contains placeholders, so leaving them unchanged will cause a `FileNotFoundError`.
+
+For the standard project datasets, `.env` should contain:
+
+```dotenv
+RAW_DATA_FILE=diabetic_data.csv
+IDS_MAPPING_FILE=IDS_mapping.csv
+```
+
+If your files have different names, use those names instead. If you edit `.env` while a notebook is open, restart its kernel before rerunning cells so the updated values are loaded.
+
 ## Notebooks
 
 | Notebook | Command |

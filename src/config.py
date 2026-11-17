@@ -23,6 +23,7 @@ load_env_file()
 RAW_DATA_DIR = PROJECT_ROOT / "data" / "raw"
 CLEAN_DATA_DIR = PROJECT_ROOT / "data" / "clean"
 PROCESSED_DATA_DIR = PROJECT_ROOT / "data" / "processed"
+TEST_CSV = PROCESSED_DATA_DIR / "test.csv"
 RAW_CSV = RAW_DATA_DIR / os.environ.get("RAW_DATA_FILE", "diabetic_data.csv")
 IDS_CSV = RAW_DATA_DIR / os.environ.get("IDS_MAPPING_FILE", "IDS_mapping.csv")
 
@@ -31,6 +32,9 @@ GENERATED = PROJECT_ROOT / "reports" / "generated"
 
 # Random seed for dataset split
 SEED = 100
+
+# Number of test encounters to include in a demo batch
+SAMPLE_SIZE = 1000
 
 # Data-related constants
 
