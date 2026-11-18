@@ -47,9 +47,51 @@ print(f"Test set: {len(test):,} encounters")
 
 # %%
 demo_batch = sample_encounters(test, n=config.SAMPLE_SIZE)
+clean = pd.read_csv(config.CLEAN_DATA_DIR / "clean.csv")
+clean["split"] = assign_split(clean)
+raw_test = clean[clean["split"] == "test"].copy()
+raw_demo = sample_encounters(raw_test, n=config.SAMPLE_SIZE)
+
+if not demo_batch[config.TARGET].reset_index(drop=True).equals(
+    raw_demo[config.TARGET].reset_index(drop=True)
+):
+    raise RuntimeError("Processed and clean demo samples are not aligned")
+
+demo_batch = demo_batch.copy()
+demo_batch["encounter_id"] = raw_demo["encounter_id"].to_numpy()
+demo_batch["patient_nbr"] = raw_demo["patient_nbr"].to_numpy()
+demo_batch["demo_admission_type"] = (
+    raw_demo["admission_type"].fillna("Unknown").to_numpy()
+)
+demo_batch["demo_age_band"] = raw_demo["age"].fillna("Unknown").to_numpy()
+demo_batch["demo_race"] = raw_demo["race"].fillna("Unknown").to_numpy()
+demo_batch["demo_diagnosis"] = (
+    raw_demo["diag_1_group"].fillna("Unknown").to_numpy()
+)
+demo_batch["demo_max_glu_serum"] = (
+    raw_demo["max_glu_serum"].fillna("Unknown").to_numpy()
+)
+demo_batch["demo_A1Cresult"] = raw_demo["A1Cresult"].fillna("Unknown").to_numpy()
+demo_batch["demo_prior_visits"] = raw_demo[
+    ["number_outpatient", "number_emergency", "number_inpatient"]
+].sum(axis=1).to_numpy()
+medications = [
+    medication
+    for medication in config.MEDICATIONS
+    if medication in raw_demo.columns and raw_demo[medication].nunique() > 1
+]
+demo_batch["demo_dosage_changes"] = raw_demo[medications].isin(
+    ["Up", "Down"]
+).sum(axis=1).to_numpy()
+for medication in medications:
+    demo_batch[f"demo_medication__{medication}"] = (
+        raw_demo[medication].isin(["Steady", "Up", "Down"]).astype(int).to_numpy()
+    )
+
 demo_batch.to_csv(config.PROCESSED_DATA_DIR / "test_sample.csv", index=False)
 
 print(f"Demo batch: {len(demo_batch):,} encounters")
+print(f"Demo patients: {demo_batch['patient_nbr'].nunique():,} unique")
 print("Saved to:", config.PROCESSED_DATA_DIR / "test_sample.csv")
 demo_batch.head()
 
@@ -59,11 +101,6 @@ demo_batch.head()
 # The processed test CSV contains transformed features, so demographics are loaded from the clean test split to retain the original age bands, race, and gender.
 
 # %%
-clean = pd.read_csv(config.CLEAN_DATA_DIR / "clean.csv")
-clean["split"] = assign_split(clean)
-raw_test = clean[clean["split"] == "test"].copy()
-raw_demo = sample_encounters(raw_test, n=config.SAMPLE_SIZE)
-
 demo_demographics = pd.DataFrame(
     {
         "age": raw_demo["age"],

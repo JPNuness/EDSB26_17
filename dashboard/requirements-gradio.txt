@@ -1,0 +1,4 @@
+# Separate UI runtime; do not install into the shared team .venv.
+gradio==5.50.0
+pandas==2.3.3
+plotly==6.5.0
